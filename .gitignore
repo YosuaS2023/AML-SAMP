@@ -1,0 +1,8 @@
+src/
+obj/
+mod/
+.vscode/
+
+ndkpath.txt
+*.mk
+*.ps1
