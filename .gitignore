@@ -1,6 +1,7 @@
 src/
 obj/
 mod/
+libs/
 .vscode/
 
 ndkpath.txt
