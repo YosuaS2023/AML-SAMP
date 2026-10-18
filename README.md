@@ -190,23 +190,3 @@ Bagi pemain yang menggunakan mod yang membutuhkan **AMLSAMP Mobile**:
    Android/data/<package.name>/files/mods/
    ```
 4. Jalankan game bersama mod yang Anda gunakan.
-
----
-
-## ⚙️ Konfigurasi (`amlsamp.ini`)
-
-AMLSAMP Mobile mendukung pemilihan library SA-MP secara dinamis melalui file konfigurasi AML.
-
-Saat game pertama kali dijalankan, file konfigurasi akan otomatis dibuat di folder konfigurasi AML:
-```
-Android/data/<package.name>/files/configs/amlsamp.ini
-```
-
-### Isi File Konfigurasi:
-```ini
-[General]
-LibraryName=libSAMP.so
-```
-
-* **`LibraryName`**: Nama file `.so` client SA-MP yang digunakan oleh APK/klien Anda (contoh: `libSAMP.so`, `libAlyn_SAMPMOBILE.so`, atau nama library custom lainnya).
-* Jika library yang ditentukan pada `LibraryName` tidak ditemukan, AMLSAMP secara otomatis akan mencoba library fallback (`libSAMP.so` dan `libAlyn_SAMPMOBILE.so`) agar tidak langsung mengalami crash.
