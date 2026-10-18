@@ -17,7 +17,7 @@
 
 - **`isampfuncs.h`**: Header interface utama yang perlu di-include ke dalam project mod AML Anda.
 - **`raknet/`**: Header data type RakNet (`BitStream`, `RakNetTypes.h`, dll) untuk parsing payload packet.
-- **`libs/`**: Binary prebuilt plugin (`libSampFuncs.so` & `libSampFuncs64.so`) yang siap dipasang di game.
+- **`libs/`**: Binary prebuilt plugin (`libSAMPAml.so` & `libSAMPAml64.so`) yang siap dipasang di game.
 - **`test.cpp`**: Contoh nyata implementasi mod client AML yang menggunakan interface AMLSAMP.
 
 ---
@@ -44,7 +44,7 @@ Tambahkan include interface AMLSAMP dan RakNet pada file source code mod Anda:
 ```
 
 ### 3. Dapatkan Interface & Daftarkan Callback
-Ambil instance `ISAMPFUNCS` pada callback `ON_ALL_MODS_LOAD()` AML dan daftarkan fungsi listener:
+Ambil instance `ISAMPFUNCS` pada callback `ON_ALL_MODS_LOAD()` AML dan daftarkan listener:
 
 ```cpp
 #include <mod/amlmod.h>
@@ -57,40 +57,42 @@ Ambil instance `ISAMPFUNCS` pada callback `ON_ALL_MODS_LOAD()` AML dan daftarkan
 
 MYMOD(com.example.mymod, My AMLSAMP Mod, 1.0, AuthorName)
 
-ISAMPFUNCS* isampfuncs = nullptr;
+ISAMPFUNCS* amlsamp = nullptr;
 
-// 1. Fungsi callback untuk menangani packet yang masuk dari server
-void OnReceivePacket(RakNet::Packet* pkt)
+// 1. Callback untuk menangani Packet umum (User-Friendly: Payload langsung siap dibaca)
+void OnReceivePacket(uint8_t packetId, RakNet::BitStream* bs)
 {
-    if (!pkt || !pkt->data || pkt->length == 0)
-        return;
+    logger->Info("[MyMod] Diterima Packet ID: %u (Payload: %u bits)", packetId, bs ? bs->GetNumberOfUnreadBits() : 0);
 
-    // Byte pertama adalah Packet ID
-    uint8_t packetId = pkt->data[0];
-
-    logger->Info("[MyMod] Diterima Packet ID: %u (Panjang: %u byte)", packetId, pkt->length);
-
-    // Contoh: Membaca isi payload menggunakan BitStream
-    /*
-    RakNet::BitStream bs(pkt->data, pkt->length, false);
-    bs.IgnoreBits(8); // Lewati byte Packet ID
-
-    // Baca data selanjutnya sesuai struktur packet SA-MP...
-    */
+    if (packetId == 100 || packetId == 252)
+    {
+        uint8_t action = 0;
+        if (bs && bs->Read(action))
+        {
+            logger->Info("[MyMod] Custom Packet action: %u", action);
+        }
+    }
 }
 
-// 2. Hubungkan ke AMLSAMP saat semua mod selesai dimuat
+// 2. Callback untuk menangani RPC dari server
+void OnReceiveRPC(int rpcId, RakNet::BitStream* bs)
+{
+    logger->Info("[MyMod] Incoming RPC ID: %d", rpcId);
+}
+
+// 3. Hubungkan ke AMLSAMP saat semua mod selesai dimuat
 ON_ALL_MODS_LOAD()
 {
-    isampfuncs = (ISAMPFUNCS*)GetInterface("AMLSAMP");
-    if (!isampfuncs)
+    amlsamp = (ISAMPFUNCS*)GetInterface("AMLSAMP");
+    if (!amlsamp)
     {
-        logger->Error("AMLSAMP tidak ditemukan! Pastikan libSampFuncs.so terpasang.");
+        logger->Error("AMLSAMP tidak ditemukan! Pastikan libSAMPAml.so terpasang.");
         return;
     }
 
-    // Daftarkan fungsi listener Anda
-    isampfuncs->AddReceiveIgnoreRPCListener(OnReceivePacket);
+    // Daftarkan listener
+    amlsamp->AddReceivePacketListener(OnReceivePacket);
+    amlsamp->AddReceiveRPCListener(OnReceiveRPC);
     logger->Info("Berhasil terhubung ke AMLSAMP Mobile!");
 }
 ```
@@ -103,7 +105,7 @@ ON_ALL_MODS_LOAD()
 ```cpp
 virtual void AddReceivePacketListener(ReceivePacketFn fn) = 0;
 ```
-* **Deskripsi**: Mendaftarkan fungsi callback untuk menerima paket non-RPC (seperti custom packet 100/252, sync, dll.). `SAMPFUNCS` otomatis membuang timestamp & packet ID, sehingga `bs` langsung siap membaca payload data server!
+* **Deskripsi**: Mendaftarkan fungsi callback untuk menerima paket non-RPC (seperti custom packet 100/252, sync, dll.). `AMLSAMP` otomatis membuang timestamp & packet ID, sehingga `bs` langsung siap membaca payload data server!
 * **Tipe Callback**:
   ```cpp
   typedef void (*ReceivePacketFn)(uint8_t packetId, RakNet::BitStream* bs);
@@ -124,7 +126,7 @@ virtual void AddReceiveIgnoreRPCListener(ReceiveRawPacketFn fn) = 0; // Alias ko
 ```cpp
 virtual void AddReceiveRPCListener(ReceiveRPCFn fn) = 0;
 ```
-* **Deskripsi**: Mendaftarkan listener khusus untuk **Remote Procedure Call (RPC)** masuk dari server. `SAMPFUNCS` otomatis mem-parse timestamp dan kompresi data, sehingga callback langsung menerima `rpcId` dan `BitStream` isinya.
+* **Deskripsi**: Mendaftarkan listener khusus untuk **Remote Procedure Call (RPC)** masuk dari server. `AMLSAMP` otomatis mem-parse timestamp dan kompresi data, sehingga callback langsung menerima `rpcId` dan `BitStream` isinya.
 * **Tipe Callback**:
   ```cpp
   typedef void (*ReceiveRPCFn)(int rpcId, RakNet::BitStream* bs);
@@ -181,8 +183,8 @@ Bagi pemain yang menggunakan mod yang membutuhkan **AMLSAMP Mobile**:
 
 1. Pastikan game GTA:SA sudah terpasang **AndroidModLoader (AML)**.
 2. Salin file library dari folder `libs/`:
-   * Untuk GTA 32-bit: `libs/armeabi-v7a/libSampFuncs.so`
-   * Untuk GTA 64-bit: `libs/arm64-v8a/libSampFuncs64.so`
+   * Untuk GTA 32-bit: `libs/armeabi-v7a/libSAMPAml.so`
+   * Untuk GTA 64-bit: `libs/arm64-v8a/libSAMPAml64.so`
 3. Masukkan file `.so` tersebut ke folder mods AML di storage perangkat Anda:
    ```
    Android/data/<package.name>/files/mods/
@@ -191,13 +193,13 @@ Bagi pemain yang menggunakan mod yang membutuhkan **AMLSAMP Mobile**:
 
 ---
 
-## ⚙️ Konfigurasi (`sampfuncs.ini`)
+## ⚙️ Konfigurasi (`amlsamp.ini`)
 
 AMLSAMP Mobile mendukung pemilihan library SA-MP secara dinamis melalui file konfigurasi AML.
 
 Saat game pertama kali dijalankan, file konfigurasi akan otomatis dibuat di folder konfigurasi AML:
 ```
-Android/data/<package.name>/files/configs/sampfuncs.ini
+Android/data/<package.name>/files/configs/amlsamp.ini
 ```
 
 ### Isi File Konfigurasi:
