@@ -6,9 +6,10 @@
 
 ## 🌟 Kegunaan & Fitur Utama
 
-- **Komunikasi Jaringan SA-MP**: Membuka akses bagi mod AML untuk membaca, dan memproses packet jaringan yang dikirim oleh server ke client.
-- **RakNet & RPC Handler**: Memungkinkan mod menangkap packet masuk melalui event jaringan `ReceiveIgnoreRPC`.
-- **Sistem Interface Modular AML**: Menggunakan standar `GetInterface("AMLSAMP")` dari AML, sehingga banyak mod berbeda dapat mendengarkan packet jaringan secara bersamaan tanpa saling bentrok.
+- **Safe RakNet & RPC Interceptor**: Membuka akses aman bagi mod AML untuk bertukar data dengan server melalui Custom Packet (ID >= 220) dan Custom RPC (ID >= 200).
+- **Proteksi Safe Mode Otomatis**: Memblokir manipulasi packet dan RPC gameplay bawaan SA-MP (RPC < 200, Packet < 220) agar mod tidak dapat disalahgunakan untuk cheating/abusing server.
+- **Identifikasi Server Otomatis (`-AMLSAMP`)**: Menginjeksi tag `-AMLSAMP` ke dalam string versi client saat connect (RPC 25 `RPC_ClientJoin`), sehingga server SA-MP dapat mendeteksi pemain AMLSAMP via `GetPlayerVersion(playerid)`.
+- **Sistem Interface Modular AML**: Menggunakan standar `GetInterface("AMLSAMP")` dari AML, sehingga banyak mod berbeda dapat saling berkomunikasi secara terisolasi tanpa saling bentrok.
 - **Arsitektur 32-bit & 64-bit**: Mendukung `armeabi-v7a` dan `arm64-v8a`.
 
 ---

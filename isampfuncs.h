@@ -20,6 +20,8 @@ typedef void (*RPCFunction)(RakNet::RPCParameters* pRpcParams);
 
 class ISAMPFUNCS {
 public:
+    virtual ~ISAMPFUNCS() = default;
+
     // Mendaftarkan callback untuk menerima packet (user-friendly: packetId + payload BitStream)
     virtual void AddReceivePacketListener(ReceivePacketFn fn) = 0;
 

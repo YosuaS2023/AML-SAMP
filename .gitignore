@@ -6,3 +6,4 @@ mod/
 ndkpath.txt
 *.mk
 *.ps1
+aml-psdk/
